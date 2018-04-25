@@ -25,71 +25,149 @@ void manyFilesToOne(const QString & workPath,
 	outFile.close();
 }
 
+void addMedAbbr(const QString & filesDir,
+				const QStringList & filters,
+				const QByteArray & medlineBase)
+{
+	auto lst = QDir(filesDir).entryList(filters);
+	for(const auto & fileName : lst)
+	{
+		/// read file
+		QString filePath = filesDir + "/" + fileName;
+		QFile oneBib(filePath);
+		oneBib.open(QIODevice::ReadOnly);
+		QString oneBibCont = oneBib.readAll();
+		oneBib.close();
+
+		if(oneBibCont.contains(QRegExp(R"(\s*abbr\=\{.*\}\,?\s*)"))) { continue; }
+
+		/// find journal name
+		QRegularExpression toFind{R"((\s*journal\=\{)(.*)(\}\,?))"};
+		auto mat = toFind.match(oneBibCont);
+		if(!mat.hasMatch()) { continue; }
+
+		QString journal = mat.captured(2);
+		journal.remove('\\');
+		std::cout << journal << std::endl;
+
+		/// replace Upper to lower but not in abbreviations and not the first one
+		QRegularExpression upp(R"((.+?)([A-Z])(?=[a-z]))");
+		auto uppMat = upp.match(journal);
+		while(uppMat.hasMatch())
+		{
+			journal[uppMat.capturedStart(2)] = journal[uppMat.capturedStart(2)].toLower();
+			uppMat = upp.match(journal, uppMat.capturedEnd(2));
+		}
+
+//		std::cout << std::endl;
+		std::cout << journal << std::endl;
+
+		/// find abbr in medline base
+		int a = medlineBase.indexOf(journal);
+		std::cout << a << std::endl;
+
+		/// if no such journal
+		if(a == -1)
+		{
+
+			std::cout << std::endl;
+			continue;
+		}
+
+		int sta = a + journal.size() + 1;
+		int len = medlineBase.indexOf('\n', sta) - sta;
+		QString abbr = medlineBase.mid(sta, len); /// +1 for _ separator
+
+		std::cout << abbr << std::endl;
+		std::cout << std::endl;
+
+		/// insert abbr
+		int ins = oneBibCont.indexOf("\n", mat.capturedStart() + 1);
+		oneBibCont.insert(ins + 1, "  abbr={" + abbr + "},\n");
+
+		/// write new
+		oneBib.open(QIODevice::WriteOnly);
+		oneBib.write(oneBibCont.toStdString().c_str());
+		oneBib.close();
+	}
+}
+
 QString authorsFromData(const QString & authors, const QString & style)
 {
-	QStringList lst = authors.split("and", QString::SkipEmptyParts);
-	std::vector<std::vector<QString>> names{}; /// [authName][first/second/last]
+	QStringList lst = authors.split(" and ", QString::SkipEmptyParts);
+	std::vector<std::vector<QString>> names{}; /// [authName][last/first/second(s)]
 	for(const QString & in : lst)
 	{
 		/// many problems here
 		auto l = in.split(QRegExp("[\\s\\,]"), QString::SkipEmptyParts);
 
-		if(l.size() == 3)
+		QString first{};
+		QString last{};
+		QString second{};
+
+		int secondStart{};
+		int secondEnd{};
+
+		if(in.contains(',')) /// Last, First Second
 		{
-			if(in.contains(',')) /// Last, First Second
+			last = l[0];
+			first = l[1];
+			if(l.size() > 2)
 			{
-				names.push_back({l[1], l[2], l[0]});
+				secondStart = 2;
+				secondEnd = l.size();
 			}
-			else /// First Second Last
+
+		}
+		else /// First Second(s) Last
+		{
+			last = l.last();
+			first = l.first();
+			if(l.size() > 2)
 			{
-				names.push_back({l[0], l[1], l[2]});
+				secondStart = 1;
+				secondEnd = l.size() - 1;
 			}
 		}
-		else /// if(l.size() == 2)
+		if(l.size() > 2)
 		{
-			if(in.contains(',')) /// Last, First
+			second.clear();
+			for(int i = secondStart; i < secondEnd; ++i)
 			{
-				names.push_back({l[1], l[0]});
+				second += l[i] + " ";
 			}
-			else /// First Last
-			{
-				names.push_back({l[0], l[1]});
-			}
+			if(!second.isEmpty()) { second.chop(1); }
 		}
+		names.push_back({last, first, second});
 	}
 
 	QString res{};
+	int counter = 1;
 	for(auto in : names)
 	{
 		QString tmp = style;
-		if(in.size() == 3)
+		/// last name
+		tmp.replace("<L>", in[0]);
+
+		/// first name
+		tmp.replace("<F>", in[1]);
+		in[1].remove(QRegExp("[^A-Z]"));
+		tmp.replace("<Fs>", in[1]);
+
+		 /// second name - ok if empty
+		tmp.replace("<S>", in[2]);
+		in[2].remove(QRegExp("[^A-Z]"));
+		tmp.replace("<Ss>", in[2]);
+
+		if(counter == bib::authorHowManyEtAl)
 		{
-			tmp.replace("<S>", in[1]);
-			in[1].remove(QRegExp("[a-z]"));
-			tmp.replace("<Ss>", in[1]);
-
-			tmp.replace("<F>", in[0]);
-			in[0].remove(QRegExp("[a-z]"));
-			tmp.replace("<Fs>", in[0]);
-
-			tmp.replace("<L>", in[2]);
+			res += "et al." + bib::authorSeparator;
+			break;
 		}
-		else /// if(l.size() == 2) /// without second name
-		{
-//			tmp.replace("<Ss>", in[1][0]);
-//			tmp.replace("<S>", in[1]);
-			tmp.remove("<S>");
-			tmp.remove("<Ss>");
-
-			tmp.replace("<F>", in[0]);
-			in[0].remove(QRegExp("[a-z]"));
-			tmp.replace("<Fs>", in[0]);
-
-			tmp.replace("<L>", in[1]);
-		}
-
 		res += tmp;
 		res += bib::authorSeparator;
+
+		++counter;
 	}
 	res.chop(authorSeparator.size());
 	return res;
@@ -103,13 +181,12 @@ Bib::Bib(const QString & bibContents)
 	toParse.resize(toParse.lastIndexOf('}'));
 
 	/// chop first ...{
-	toParse = toParse.right(toParse.size() - toParse.indexOf('{') + 1);
+	toParse = toParse.right(toParse.size() - toParse.indexOf('{'));
 
-//	std::cout << toParse << std::endl;
 
 	for(const auto & acr : bib::styleAcronyms)
 	{
-		QRegularExpression toFind{R"((?<=)" + acr.second + R"(\=\{)(.*)(?=\}))"};
+		QRegularExpression toFind{"(?<=" + acr.second + R"(\=\{)(.*)(?=\}))"};
 		auto mat = toFind.match(toParse);
 		if(mat.hasMatch())
 		{
@@ -142,7 +219,7 @@ QString Bib::asStyle(const QString & style)
 		{ return par.first == mat2.captured(); });
 
 		QString val = dt[(*it).second];
-//		std::cout << val << '_' << std::endl;
+//		std::cout << val << std::endl << std::endl;
 		if(!val.isEmpty())
 		{
 			QString tmpNew = tmp;
@@ -160,13 +237,24 @@ QString Bib::asStyle(const QString & style)
 
 	for(const auto & acr : bib::styleAcronyms)
 	{
-		if(acr.first != "<A>")
+		if(acr.first == "<A>")
 		{
-			res.replace(acr.first, this->dt[acr.second]);
+			res.replace(acr.first, bib::authorsFromData(this->dt[acr.second]));
+		}
+		else if(acr.first == "<j>")
+		{
+			if(!this->dt[acr.second].isEmpty())
+			{
+				res.replace(acr.first, this->dt[acr.second]);
+			}
+			else /// if there's no abbreviation
+			{
+				res.replace(acr.first, this->dt["journal"]);
+			}
 		}
 		else
 		{
-			res.replace(acr.first, bib::authorsFromData(this->dt[acr.second]));
+			res.replace(acr.first, this->dt[acr.second]);
 		}
 	}
 	return res;
@@ -185,14 +273,16 @@ QString Bib::firstAuthor()
 BibBase::BibBase(const QString & baseContents)
 {
 
-	QRegularExpression toFind{R"((?<=@)(.*?)(?=(\}\,{0,1})\n\s*?\n))"};
+	QRegularExpression toFind{R"((?<=@)(.*?\})(?=\,?\n\t*\n))"};
 	toFind.setPatternOptions(QRegularExpression::DotMatchesEverythingOption);
 	int offset = 0;
 	auto mat = toFind.match(baseContents);
 	while(mat.hasMatch())
 	{
-		this->bibs.push_back(bib::Bib(mat.captured()));
-		offset += mat.captured().size();
+		QString tmp = mat.captured();
+//		std::cout << tmp << std::endl;
+		this->bibs.push_back(bib::Bib(tmp));
+		offset += tmp.size();
 		mat = toFind.match(baseContents, offset);
 	}
 
@@ -201,9 +291,13 @@ BibBase::BibBase(const QString & baseContents)
 std::vector<QString> BibBase::asStyle(const QString & style)
 {
 	std::vector<QString> res{};
+//	int count = 1;
 	for(Bib & in : this->bibs)
 	{
+//		std::cout << count << std::endl;
 		res.push_back(in.asStyle(style));
+//		std::cout << count << std::endl;
+//		++count;
 	}
 	return res;
 }

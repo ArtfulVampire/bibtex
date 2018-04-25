@@ -32,6 +32,7 @@ const std::vector<std::pair<QString, QString>> styleAcronyms
 	{"<T>", "title"},
 	{"<Y>", "year"},
 	{"<J>", "journal"},
+	{"<j>", "abbr"},
 	{"<V>", "volume"},
 	{"<N>", "number"},
 	{"<P>", "pages"},
@@ -42,7 +43,7 @@ const std::vector<std::pair<QString, QString>> styleAcronyms
 	{"<B>", "booktitle"},
 	{"<O>", "organization"}
 };
-const QString articleStyle = "<A>. <T>. <J>. <Y>[;<V>][(<N>)][:<P>].[ https://doi.org/<D>.][ Cited in PubMed PMID:<M>.]";
+const QString articleStyle = "<A>. <T>. <j>. <Y>[;<V>][(<N>)][:<P>].[ https://doi.org/<D>.][ Cited in PubMed PMID:<M>.]";
 
 
 class Bib
@@ -73,6 +74,10 @@ public:
 void manyFilesToOne(const QString & workPath,
 					const QStringList & filters,
 					const QString outFilePath);
+
+void addMedAbbr(const QString & filesDir,
+				const QStringList & filters,
+				const QByteArray & medlineBase);
 
 
 

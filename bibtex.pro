@@ -21,3 +21,7 @@ SOURCES += main.cpp \
 
 HEADERS += \
     lib.h
+
+DISTFILES += \
+    medline.txt \
+    medlineShort.txt
