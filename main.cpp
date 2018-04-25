@@ -12,18 +12,6 @@ int main()
 
 
 
-	if(0)
-	{
-		/// add medAbbr to files
-		QFile medFile("/home/michael/Projects/bibtex/medlineShort.txt");
-		medFile.open(QIODevice::ReadOnly);
-		auto medCont = medFile.readAll();
-		medFile.close();
-
-		bib::addMedAbbr(workPath + "/txts/test",
-						filters,
-						medCont);
-	}
 
 
 	if(0)
@@ -54,7 +42,20 @@ int main()
 	}
 
 
-	if(0)
+	if(01)
+	{
+		/// add medAbbr to files
+		QFile medFile("/home/michael/Projects/bibtex/medlineShort.txt");
+		medFile.open(QIODevice::ReadOnly);
+		auto medCont = medFile.readAll();
+		medFile.close();
+
+		bib::addMedAbbr(workPath + "/txts/test",
+						filters,
+						medCont);
+	}
+
+	if(01)
 	{
 		/// make base
 

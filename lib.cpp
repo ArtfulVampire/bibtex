@@ -74,7 +74,7 @@ void addMedAbbr(const QString & filesDir,
 			continue;
 		}
 
-		int sta = a + journal.size() + 1;
+		int sta = medlineBase.indexOf('_', a + journal.size() + 1) + 1;
 		int len = medlineBase.indexOf('\n', sta) - sta;
 		QString abbr = medlineBase.mid(sta, len); /// +1 for _ separator
 
@@ -161,7 +161,7 @@ QString authorsFromData(const QString & authors, const QString & style)
 
 		if(counter == bib::authorHowManyEtAl)
 		{
-			res += "et al." + bib::authorSeparator;
+			res += "et al" + bib::authorSeparator;
 			break;
 		}
 		res += tmp;
