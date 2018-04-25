@@ -76,7 +76,7 @@ void addMedAbbr(const QString & filesDir,
 
 		int sta = medlineBase.indexOf('_', a + journal.size() + 1) + 1;
 		int len = medlineBase.indexOf('\n', sta) - sta;
-		QString abbr = medlineBase.mid(sta, len); /// +1 for _ separator
+		QString abbr = medlineBase.mid(sta, len);
 
 		std::cout << abbr << std::endl;
 		std::cout << std::endl;
@@ -206,12 +206,9 @@ QString Bib::asStyle(const QString & style)
 	while(mat.hasMatch())
 	{
 		QString tmp = mat.captured();
-//		std::cout << tmp << std::endl;
 
-		QRegularExpression toFind2{R"(\<[A-Z]\>)"};
+		QRegularExpression toFind2{R"(\<[a-zA-Z]+?\>)"};
 		auto mat2 = toFind2.match(tmp); /// we definitely find it
-
-//		std::cout << mat2.captured() << std::endl;
 
 		auto it = std::find_if(std::begin(bib::styleAcronyms),
 							   std::end(bib::styleAcronyms),
@@ -219,7 +216,6 @@ QString Bib::asStyle(const QString & style)
 		{ return par.first == mat2.captured(); });
 
 		QString val = dt[(*it).second];
-//		std::cout << val << std::endl << std::endl;
 		if(!val.isEmpty())
 		{
 			QString tmpNew = tmp;
@@ -237,11 +233,11 @@ QString Bib::asStyle(const QString & style)
 
 	for(const auto & acr : bib::styleAcronyms)
 	{
-		if(acr.first == "<A>")
+		if(acr.first == "<Auth>")
 		{
 			res.replace(acr.first, bib::authorsFromData(this->dt[acr.second]));
 		}
-		else if(acr.first == "<j>")
+		else if(acr.first == "<Js>")
 		{
 			if(!this->dt[acr.second].isEmpty())
 			{

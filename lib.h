@@ -28,22 +28,37 @@ inline std::ostream & operator<< (std::ostream & os, const QString & toOut)
 
 const std::vector<std::pair<QString, QString>> styleAcronyms
 {
-	{"<A>", "author"},
-	{"<T>", "title"},
-	{"<Y>", "year"},
-	{"<J>", "journal"},
-	{"<j>", "abbr"},
-	{"<V>", "volume"},
-	{"<N>", "number"},
-	{"<P>", "pages"},
-	{"<D>", "doi"},
-	{"<M>", "PMID"},
-	{"<S>", "publisher"},
-	{"<C>", "city"},
+	{"<Auth>", "author"},
+	{"<Tit>", "title"},
 	{"<B>", "booktitle"},
-	{"<O>", "organization"}
+	{"<y>", "year"},
+	{"<d>", "day"},
+	{"<m>", "month"},
+	{"<J>", "journal"},
+	{"<Js>", "abbr"},
+	{"<Vol>", "volume"},
+	{"<Num>", "number"},
+	{"<Pag>", "pages"},
+	{"<Pub>", "publisher"},
+	{"<Org>", "organization"},
+	{"<Cit>", "city"},
+	{"<Co>", "country"},
+	{"<St>", "state"},
+	{"<DOI>", "doi"},
+	{"<PMID>", "PMID"},
+	{"<ISBN>", "ISBN"}
 };
-const QString articleStyle = "<A>. <T>. <j>. <Y>[;<V>][(<N>)][:<P>].[ https://doi.org/<D>.][ Cited in PubMed PMID:<M>.]";
+
+#if 01
+/// Taylor and Francis - https://www.tandfonline.com/action/authorSubmission?journalCode=ibij20&page=instructions
+const QString articleStyle = "<Auth>. <Tit>. <Js>. <y>[;<Vol>][(<Num>)][:<Pag>].[ https://doi.org/<DOI>.][ Cited in PubMed PMID:<PMID>.]";
+const QString bookStyle = "<Auth>. <Tit>. <Cit>[ (<St>)]: <Pub>; <y>.[ <Pag> p.][ ISBN <ISBN>]";
+const QString confStyle = "<Auth>. <Tit>. Paper presented at: <Conf>; <y> <m> <d>; <Cit>, <Co>.";
+#elif 0
+
+#else
+
+#endif
 
 
 class Bib

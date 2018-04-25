@@ -42,7 +42,7 @@ int main()
 	}
 
 
-	if(01)
+	if(0)
 	{
 		/// add medAbbr to files
 		QFile medFile("/home/michael/Projects/bibtex/medlineShort.txt");
@@ -55,7 +55,7 @@ int main()
 						medCont);
 	}
 
-	if(01)
+	if(0)
 	{
 		/// make base
 
@@ -73,6 +73,7 @@ int main()
 		QString contents = inFile.readAll();
 		inFile.close();
 		bib::BibBase bas(contents);
+
 
 		/// output
 		QFile outFile(workPath + "/reference.txt");
