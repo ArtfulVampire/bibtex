@@ -141,6 +141,18 @@ QString authorsFromData(const QString & authors, const QString & style)
 		names.push_back({last, first, second});
 	}
 
+	/// clean from diacritics
+	for(auto & in1 : names)
+	{
+		for(auto & in2 : in1)
+		{
+			for(const auto & in : bib::diacritics)
+			{
+				in2.replace(in.first, QChar(in.second));
+			}
+		}
+	}
+
 	QString res{};
 	int counter = 1;
 	for(auto in : names)
@@ -197,6 +209,7 @@ Bib::Bib(const QString & bibContents)
 	if(dt["title"].endsWith('.')) { dt["title"].chop(1); }
 }
 
+/// main function
 QString Bib::asStyle(const QString & style)
 {
 	QString res = style;
@@ -268,7 +281,6 @@ QString Bib::firstAuthor()
 
 BibBase::BibBase(const QString & baseContents)
 {
-
 	QRegularExpression toFind{R"((?<=@)(.*?\})(?=\,?\n\t*\n))"};
 	toFind.setPatternOptions(QRegularExpression::DotMatchesEverythingOption);
 	int offset = 0;
