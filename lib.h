@@ -24,7 +24,7 @@ inline std::ostream & operator<< (std::ostream & os, const QString & toOut)
 const std::vector<std::pair<QString, QString>> styleAcronyms
 {
 	{"<Auth>", "author"},
-	{"<Tit>", "title"},
+	{"<Title>", "title"},
 	{"<B>", "booktitle"},
 	{"<y>", "year"},
 	{"<d>", "day"},
@@ -36,7 +36,7 @@ const std::vector<std::pair<QString, QString>> styleAcronyms
 	{"<Pag>", "pages"},
 	{"<Pub>", "publisher"},
 	{"<Org>", "organization"},
-	{"<Cit>", "city"},
+	{"<City>", "city"},
 	{"<Co>", "country"},
 	{"<St>", "state"},
 	{"<DOI>", "doi"},
@@ -44,14 +44,16 @@ const std::vector<std::pair<QString, QString>> styleAcronyms
 	{"<ISBN>", "ISBN"}
 };
 
-const QString authorStyle = "<L> <Fs><Ss>"; /// L-last name, F - first name, S - second name, s - short
+/// make [<Ss>.]
+const QString authorStyle = "<L> <Fs>.<Ss>."; /// L-last name, F - first name, S - second name, s - short
 const QString authorSeparator = ", ";
 const int authorHowManyEtAl = 11;
+
 #if 01
 /// Taylor and Francis - https://www.tandfonline.com/action/authorSubmission?journalCode=ibij20&page=instructions
-const QString articleStyle = "<Auth>. <Tit>. <Js>. <y>[;<Vol>][(<Num>)][:<Pag>].[ https://doi.org/<DOI>.][ Cited in PubMed PMID:<PMID>.]";
-const QString bookStyle = "<Auth>. <Tit>. <Cit>[ (<St>)]: <Pub>; <y>.[ <Pag> p.][ ISBN <ISBN>]";
-const QString confStyle = "<Auth>. <Tit>. Paper presented at: <Conf>; <y> <m> <d>; <Cit>, <Co>.";
+const QString articleStyle = "<Auth> <Title>. <J>. <y>[; <Vol>][(<Num>)][: <Pag>].[ https://doi.org/<DOI>]";
+const QString bookStyle = "<Auth>. <Title>. <City>[ (<St>)]: <Pub>; <y>.[ <Pag> p.][ ISBN <ISBN>]";
+const QString confStyle = "<Auth>. <Title>. Paper presented at: <Conf>; <y> <m> <d>; <City>, <Co>.";
 #elif 0
 
 #else

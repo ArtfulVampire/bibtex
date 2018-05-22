@@ -24,4 +24,5 @@ HEADERS += \
 
 DISTFILES += \
     medline.txt \
-    medlineShort.txt
+    medlineShort.txt \
+    medlineShortDup.txt
