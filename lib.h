@@ -36,6 +36,7 @@ const std::vector<std::pair<QString, QString>> styleAcronyms
 	{"<Pag>", "pages"},
 	{"<Pub>", "publisher"},
 	{"<Org>", "organization"},
+	{"<eds>", "editors"},
 	{"<City>", "city"},
 	{"<Co>", "country"},
 	{"<St>", "state"},
@@ -44,33 +45,49 @@ const std::vector<std::pair<QString, QString>> styleAcronyms
 	{"<ISBN>", "ISBN"}
 };
 
+
+
 /// make [<Ss>.]
 const QString authorStyle = "<L> <Fs>.<Ss>."; /// L-last name, F - first name, S - second name, s - short
 const QString authorSeparator = ", ";
 const int authorHowManyEtAl = 11;
 
-#if 01
+/// make alternative condition {ifhas1|ifhas2|ifhas3}, stop at first occurence
+#if 0
 /// Taylor and Francis - https://www.tandfonline.com/action/authorSubmission?journalCode=ibij20&page=instructions
 const QString articleStyle = "<Auth> <Title>. <J>. <y>[; <Vol>][(<Num>)][: <Pag>].[ https://doi.org/<DOI>]";
-const QString bookStyle = "<Auth>. <Title>. <City>[ (<St>)]: <Pub>; <y>.[ <Pag> p.][ ISBN <ISBN>]";
+const QString chapterStyle = "<Auth>. <Title>. pp. <Pag> In: <B>, <Pub>, eds. <eds>, <City>, <y>.[ ISBN <ISBN>]";
+const QString bookStyle = "<Auth>. <B>. <Pub>, eds. <eds>, <City> <y>.[ ISBN <ISBN>]";
 const QString confStyle = "<Auth>. <Title>. Paper presented at: <Conf>; <y> <m> <d>; <City>, <Co>.";
-#elif 0
-
+const QString unknownStyle = "<Auth> <Title> [<J>][<B>]. <y>[ https://doi.org/<DOI>]";
+#elif 1
+/// IHNA for site
+const QString articleStyle = "<Auth> <Title>. <J>. <y>[; <Vol>][(<Num>)][: <Pag>].[ PMID: <PMID>][ https://doi.org/<DOI>]";
+const QString chapterStyle = "<Auth>. <Title>.[ pp. <Pag>] In: <B>, <y>. <Pub>[, eds. <eds>][, <City>].[ ISBN <ISBN>]";
+const QString bookStyle = "<Auth> <B>. <Pub>, eds. <eds>, <City> <y>.[ ISBN <ISBN>]";
+const QString confStyle = "<Auth> <Title>. At: <Conf>; <y> <m> <d>; <City>, <Co>."; /// oral conference
+const QString procStyle = "<Auth> <Title>. In: <B>, <y>.[ <Pub>][, eds. <eds>.][ <d>][ <m>][, <City>][, <Co>].[ https://doi.org/<DOI>]"; /// written proceedings
+const QString unknownStyle = "<Auth> <Title> [<J>][<B>]. <y>[ https://doi.org/<DOI>]";
 #else
 
 #endif
 
+enum class Style {unknown, article, book, proceedings, conference, chapter};
 
 class Bib
 {
 public:
-	QString asStyle(const QString & style = bib::articleStyle);
+	static const std::map<QString, QString> months;
+	QString asStyle();
 	int year();
 	QString firstAuthor();
 
 	Bib(const QString & bibContents);
+
 private:
 	std::map<QString, QString> dt{};
+	Style format{};
+	QString style{};
 };
 
 class BibBase
@@ -80,7 +97,7 @@ private:
 
 public:
 	BibBase(const QString & baseContents);
-	std::vector<QString> asStyle(const QString & style = bib::articleStyle);
+	std::vector<QString> asStyle();
 };
 
 
@@ -148,6 +165,9 @@ const std::map<QString, int> diacritics{
 	{"{\\'U}", 218},
 	{"{\\^U}", 219},
 	{"{\\\"U}", 220},
+	
+	/// i
+	{"{\\u\\i}}", 0x12d}, /// with brevis
 
 	/// consonants
 	{"{\\cc}", 231},

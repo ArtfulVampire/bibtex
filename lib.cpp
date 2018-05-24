@@ -103,20 +103,9 @@ QString authorsFromData(const QString & authors, const QString & style)
 	QStringList lst = authors.split(" and ", QString::SkipEmptyParts);
 	std::vector<std::vector<QString>> names{}; /// [authNum][last/first/second(s)]
 
-//	for(const auto & in : lst)
-//	{
-//		std::cout << in << std::endl;
-//	}
-
 	for(const QString & in : lst)
 	{
 		/// many problems here
-		auto l = in.split(QRegExp(R"([, ])"), QString::SkipEmptyParts);
-//		for(const auto & in : l)
-//		{
-//			std::cout << in << "\t";
-//		}
-//		std::cout << std::endl;
 
 		QString first{};
 		QString last{};
@@ -125,35 +114,54 @@ QString authorsFromData(const QString & authors, const QString & style)
 		int secondStart{};
 		int secondEnd{};
 
-		if(in.contains(',')) /// Last, First Second
+		if(in.contains(',')) /// Last, First Second - usual format
 		{
-			last = l[0];
-			first = l[1];
-			if(l.size() > 2)
+			last = in.left(in.indexOf(','));
+			QString in2 = in.mid(in.indexOf(','));	/// cut last name
+
+			auto ll = in2.split(QRegExp(R"([, ])"), QString::SkipEmptyParts);
+
+			/// double letters - first and second names.
+			/// what with cyrillic???
+			if(ll.size() == 1 && ll[0].size() == 2 && ll[0][0].isUpper() && ll[0][1].isUpper())
 			{
-				secondStart = 2;
-				secondEnd = l.size();
+				first = ll[0][0];
+				second = ll[0][1];
+			}
+			else
+			{
+				first = ll[0];
+				if(ll.size() > 1)
+				{
+					secondStart = 1;
+					secondEnd = ll.size();
+
+					second.clear();
+					for(int i = secondStart; i < secondEnd; ++i)
+					{
+						second += ll[i] + " ";
+					}
+					if(!second.isEmpty()) { second.chop(1); }
+				}
 			}
 
 		}
 		else /// First Second(s) Last
 		{
+			auto l = in.split(QRegExp(R"([, ])"), QString::SkipEmptyParts);
 			last = l.last();
 			first = l.first();
 			if(l.size() > 2)
 			{
 				secondStart = 1;
 				secondEnd = l.size() - 1;
+				second.clear();
+				for(int i = secondStart; i < secondEnd; ++i)
+				{
+					second += l[i] + " ";
+				}
+				if(!second.isEmpty()) { second.chop(1); }
 			}
-		}
-		if(l.size() > 2)
-		{
-			second.clear();
-			for(int i = secondStart; i < secondEnd; ++i)
-			{
-				second += l[i] + " ";
-			}
-			if(!second.isEmpty()) { second.chop(1); }
 		}
 		names.push_back({last, first, second});
 	}
@@ -186,11 +194,21 @@ QString authorsFromData(const QString & authors, const QString & style)
 		in[1].resize(1);
 		tmp.replace("<Fs>", in[1]);
 
-		 /// second name - ok if empty
-		tmp.replace("<S>", in[2]);
-//		in[2].remove(QRegExp("[^A-Z]"));
-		in[2].resize(1);
-		tmp.replace("<Ss>", in[2]);
+		/// second name
+		if(!in[2].isEmpty())
+		{
+			tmp.replace("<S>", in[2]);
+//			in[2].remove(QRegExp("[^A-Z]"));
+			in[2].resize(1);
+			tmp.replace("<Ss>", in[2]);
+		}
+		else
+		{
+			tmp.remove("<S>");
+			tmp.remove("<Ss>");
+		}
+
+		/// double dots are dealt in the end of asStyle()
 
 		if(counter == bib::authorHowManyEtAl)
 		{
@@ -200,15 +218,76 @@ QString authorsFromData(const QString & authors, const QString & style)
 		res += tmp;
 		res += bib::authorSeparator;
 
+
+
 		++counter;
 	}
 	res.chop(authorSeparator.size());
 	return res;
 }
 
+const std::map<QString, QString> Bib::months
+{
+	{"01",	"January"},
+	{"1",	"January"},
+	{"02",	"February"},
+	{"2",	"February"},
+	{"03",	"March"},
+	{"3",	"March"},
+	{"04",	"April"},
+	{"4",	"April"},
+	{"05",	"May"},
+	{"5",	"May"},
+	{"06",	"June"},
+	{"6",	"June"},
+	{"07",	"July"},
+	{"7",	"July"},
+	{"08",	"August"},
+	{"8",	"August"},
+	{"09",	"September"},
+	{"9",	"September"},
+	{"10",	"October"},
+	{"11",	"November"},
+	{"12",	"December"}
+};
+
 Bib::Bib(const QString & bibContents)
 {
 	QString toParse = bibContents;
+
+	/// set style
+	if(bibContents.startsWith("article"))
+	{
+		this->format = Style::article;
+		this->style = bib::articleStyle;
+	}
+	else if(bibContents.startsWith("book"))
+	{
+		this->format = Style::book;
+		this->style = bib::bookStyle;
+	}
+	else if(bibContents.startsWith("conference"))
+	{
+		this->format = Style::conference;
+		this->style = bib::confStyle;
+	}
+	else if(bibContents.startsWith("inproceedings"))
+	{
+		this->format = Style::proceedings;
+		this->style = bib::procStyle;
+	}
+	else if(bibContents.startsWith("chapter"))
+	{
+		this->format = Style::chapter;
+		this->style = bib::chapterStyle;
+	}
+	else
+	{
+		this->format = Style::unknown;
+		this->style = bib::unknownStyle;
+	}
+
+//	std::cout << this->style << std::endl;
 
 	/// chop last '}'
 	toParse.resize(toParse.lastIndexOf('}'));
@@ -231,18 +310,19 @@ Bib::Bib(const QString & bibContents)
 }
 
 /// main function
-QString Bib::asStyle(const QString & style)
+QString Bib::asStyle()
 {
-	QString res = style;
+	QString res = this->style;
 
 	/// at first - possible absent attributes
+	/// remove square brackets if present, remove all if absent
 	QRegularExpression toFind{R"(\[.*?\])"}; /// [ anything ]
 	auto mat = toFind.match(res);
 	while(mat.hasMatch())
 	{
 		QString tmp = mat.captured();
 
-		QRegularExpression toFind2{R"(\<[a-zA-Z]+?\>)"};
+		QRegularExpression toFind2{R"(\<[a-zA-Z]+?\>)"}; /// <anything>
 		auto mat2 = toFind2.match(tmp); /// we definitely find it
 
 		auto it = std::find_if(std::begin(bib::styleAcronyms),
@@ -254,7 +334,7 @@ QString Bib::asStyle(const QString & style)
 		if(!val.isEmpty())
 		{
 			QString tmpNew = tmp;
-			tmpNew.replace(mat2.captured(), val);
+//			tmpNew.replace(mat2.captured(), val);
 			tmpNew.remove('['); tmpNew.remove(']');
 			res.replace(tmp, tmpNew);
 		}
@@ -268,7 +348,9 @@ QString Bib::asStyle(const QString & style)
 	/// other attributes
 	for(const auto & acr : bib::styleAcronyms)
 	{
-		if(acr.first == "<Auth>")
+		if(!res.contains(acr.first)) { continue; }
+
+		if(acr.first == "<Auth>" || acr.first == "<eds>")
 		{
 			res.replace(acr.first, bib::authorsFromData(this->dt[acr.second]));
 		}
@@ -283,6 +365,11 @@ QString Bib::asStyle(const QString & style)
 				res.replace(acr.first, this->dt["journal"]);
 			}
 		}
+		else if(acr.first == "<m>") /// month
+		{
+			const QString a = this->dt[acr.second];
+			res.replace(acr.first, months.at(a).left(3));
+		}
 		else
 		{
 			res.replace(acr.first, this->dt[acr.second]);
@@ -291,6 +378,8 @@ QString Bib::asStyle(const QString & style)
 
 	/// deal with double dash
 	res.replace("--", QString(0x2013));
+	/// deal with double dots
+	res.replace(QRegExp("\\.{2,}"), ".");
 
 	return res;
 }
@@ -322,14 +411,15 @@ BibBase::BibBase(const QString & baseContents)
 
 }
 
-std::vector<QString> BibBase::asStyle(const QString & style)
+std::vector<QString> BibBase::asStyle()
 {
 	std::vector<QString> res{};
 //	int count = 1;
+//	std::cout << "asdasd" << std::endl;
 	for(Bib & in : this->bibs)
 	{
 //		std::cout << count << std::endl;
-		res.push_back(in.asStyle(style));
+		res.push_back(in.asStyle());
 //		std::cout << count << std::endl;
 //		++count;
 	}

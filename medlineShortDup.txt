@@ -8147,6 +8147,7 @@ Y [report]. U.S. Atomic Energy Commission_Y Rep
 Zhurnal ushnykh, nosovykh i gorlovykh boleznei_Zh Ushn Nos Gorl Bolezn
 The journal of otology, rhinology, and laryngologie [sic]_Zh Ushn Nos Gorl Bolezn
 Zhurnal vysshei nervnoi deiatelnosti imeni I P Pavlova_Zh Vyssh Nerv Deiat Im I P Pavlova
+Zhurnal vysshei nervnoi deiatelnosti imeni I P pavlova_Zh Vyssh Nerv Deiat Im I P Pavlova
 Zobozdravstveni vestnik_Zobozdrav Vestn
 Zoonoses research_Zoonoses Res
 Annals of the Medical Section of the Polish Academy of Sciences_Ann Med Sect Pol Acad Sci
