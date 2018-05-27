@@ -20,36 +20,66 @@ inline std::ostream & operator<< (std::ostream & os, const QString & toOut)
 	return os;
 }
 
+/// to replace
+const QString author		= "author";
+const QString title			= "title";
+const QString booktitle		= "booktitle";
+const QString year			= "year";
+const QString day			= "day";
+const QString month			= "month";
+const QString journal		= "journal";
+const QString abbr			= "abbr";
+const QString volume		= "volume";
+const QString number		= "number";
+const QString pages			= "pages";
+const QString publisher		= "publisher";
+const QString organization	= "organization";
+const QString editors		= "editors";
+const QString city			= "city";
+const QString country		= "country";
+const QString state			= "state";
+const QString doi			= "doi";
+const QString PMID			= "PMID";
+const QString ISBN			= "ISBN";
+const QString lang			= "lang";			/// ru/rus, en/eng, translated title
+
+
+const QString article			= "article";
+const QString book				= "book";
+const QString conference		= "conference";
+const QString inproceedings		= "inproceedings";
+const QString chapter			= "chapter";
 
 const std::vector<std::pair<QString, QString>> styleAcronyms
 {
-	{"<Auth>", "author"},
-	{"<Title>", "title"},
-	{"<B>", "booktitle"},
-	{"<y>", "year"},
-	{"<d>", "day"},
-	{"<m>", "month"},
-	{"<J>", "journal"},
-	{"<Js>", "abbr"},
-	{"<Vol>", "volume"},
-	{"<Num>", "number"},
-	{"<Pag>", "pages"},
-	{"<Pub>", "publisher"},
-	{"<Org>", "organization"},
-	{"<eds>", "editors"},
-	{"<City>", "city"},
-	{"<Co>", "country"},
-	{"<St>", "state"},
-	{"<DOI>", "doi"},
-	{"<PMID>", "PMID"},
-	{"<ISBN>", "ISBN"}
+	{"<Auth>",	author},
+	{"<Title>",	title},
+	{"<B>",		booktitle},
+	{"<y>",		year},
+	{"<d>",		day},
+	{"<m>",		month},
+	{"<J>",		journal},
+	{"<Js>",	abbr},
+	{"<Vol>",	volume},
+	{"<Num>",	number},
+	{"<Pag>",	pages},
+	{"<Pub>",	publisher},
+	{"<Org>",	organization},
+	{"<eds>",	editors},
+	{"<City>",	city},
+	{"<Co>",	country},
+	{"<St>",	state},
+	{"<DOI>",	doi},
+	{"<PMID>",	PMID},
+	{"<ISBN>",	ISBN}
 };
 
 
 
-/// make [<Ss>.]
-const QString authorStyle = "<L> <Fs>.<Ss>."; /// L-last name, F - first name, S - second name, s - short
+/// make [<Ss>.] ?
+const QString authorStyle = "<L> <Fs><Ss>"; /// L-last name, F - first name, S - second name, s - short
 const QString authorSeparator = ", ";
+const QString initialsSeparator = ".";
 const int authorHowManyEtAl = 11;
 
 /// make alternative condition {ifhas1|ifhas2|ifhas3}, stop at first occurence
@@ -72,46 +102,132 @@ const QString unknownStyle = "<Auth> <Title> [<J>][<B>]. <y>[ https://doi.org/<D
 
 #endif
 
+
+
+
+
+
+
 enum class Style {unknown, article, book, proceedings, conference, chapter};
 
+/// vector of {Last, First, Second(s)}
+std::vector<std::vector<QString>> authorsFromData(const QString & authors);
+QString authorsString(const std::vector<std::vector<QString>> & names,
+					  const QString & style);
 class Bib
 {
 public:
-	static const std::map<QString, QString> months;
-	QString asStyle();
-	int year();
-	QString firstAuthor();
+	QString asStyle() const;
+	int year() const;
+	QString firstAuthor() const;
+	bool isEng() const;
+	bool isRus() const;
+	bool isTranslated() const;
+	bool hasAttribute(const QString & attr) const;
+	bool hasAttributesAll(const std::vector<QString> & attrs) const;
+	bool hasAttributesOne(const std::vector<QString> & attrs) const;
+	QString get(const QString & attribute) const;
+	std::vector<std::vector<QString>> getAuthors() const { return authors; }
 
 	Bib(const QString & bibContents);
+	void fromFile(const QString & filePath);
+	void fromContents(const QString & contents);
 
 private:
-	std::map<QString, QString> dt{};
+	mutable std::map<QString, QString> dt{};
+	std::vector<std::vector<QString>> authors{};
 	Style format{};
 	QString style{};
 };
 
-class BibBase
+
+
+
+
+
+
+
+class BibSubset
 {
 private:
-	std::vector<Bib> bibs;
+	std::vector<Bib> bibs{};
 
 public:
-	BibBase(const QString & baseContents);
-	std::vector<QString> asStyle();
+	BibSubset(const std::vector<Bib> & bibVec);
+
+	BibSubset & sortBy(const QString & attribute);
+	BibSubset & sortByYear(bool newFirst = true);
+	BibSubset & sortByAuthor();
+	BibSubset & removeIf(const QString & attribute, const QString & value);
+	BibSubset & removeIf(bool (*func)(bib::Bib));
+
+	void toFile(const QString & outPath);
 };
 
 
 
 
+
+
+class BibTable
+{
+private:
+	std::vector<Bib> bibs{};
+
+public:
+	BibTable(const QString & path, const QStringList & filters = {"*.txt"});
+
+	BibSubset byYear(int yr);
+	BibSubset byAuthor(const QString & auth);
+	BibSubset byAuthorsAll(const std::vector<QString> & auths);
+	BibSubset byAuthorsOne(const std::vector<QString> & auths);
+};
+
+
+
+
+
+
+void addMedAbbr(const QString & filesDir,
+				const QStringList & filters);
+
+void addSquareBrackets(const QString & filesDir,
+					   const QStringList & filters);
+
+void correctZhVND(const QString & filesDir,
+				  const QStringList & filters);
+
+
+/// deprecate
 void manyFilesToOne(const QString & workPath,
 					const QStringList & filters,
 					const QString outFilePath);
 
-void addMedAbbr(const QString & filesDir,
-				const QStringList & filters,
-				const QByteArray & medlineBase);
 
-QString authorsFromData(const QString & authors, const QString & style = authorStyle);
+const std::map<QString, QString> months
+{
+	{"01",	"January"},
+	{"1",	"January"},
+	{"02",	"February"},
+	{"2",	"February"},
+	{"03",	"March"},
+	{"3",	"March"},
+	{"04",	"April"},
+	{"4",	"April"},
+	{"05",	"May"},
+	{"5",	"May"},
+	{"06",	"June"},
+	{"6",	"June"},
+	{"07",	"July"},
+	{"7",	"July"},
+	{"08",	"August"},
+	{"8",	"August"},
+	{"09",	"September"},
+	{"9",	"September"},
+	{"10",	"October"},
+	{"11",	"November"},
+	{"12",	"December"}
+};
 
 
 const std::map<QString, int> diacritics{
