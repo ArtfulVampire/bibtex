@@ -85,6 +85,7 @@ const QString initialsSeparator = ".";
 const int authorHowManyEtAl = 11;
 
 /// make alternative condition {ifhas1|ifhas2|ifhas3}, stop at first occurence
+/// check Bib::asStyle() in the end for russian variants
 #if 0
 /// Taylor and Francis - https://www.tandfonline.com/action/authorSubmission?journalCode=ibij20&page=instructions
 const QString articleStyle = "<Auth> <Title>. <J>. <y>[; <Vol>][(<Num>)][: <Pag>].[ https://doi.org/<DOI>]";
@@ -210,7 +211,7 @@ void manyFilesToOne(const QString & workPath,
 					const QString outFilePath);
 
 
-const std::map<QString, QString> months
+const std::map<QString, QString> monthsEn
 {
 	{"01",	"January"},
 	{"1",	"January"},
@@ -233,6 +234,31 @@ const std::map<QString, QString> months
 	{"10",	"October"},
 	{"11",	"November"},
 	{"12",	"December"}
+};
+
+const std::map<QString, QString> monthsRu
+{
+	{"01",  "января"},
+	{"1",   "января"},
+	{"02",  "февраля"},
+	{"2",   "февраля"},
+	{"03",  "марта"},
+	{"3",   "марта"},
+	{"04",  "апреля"},
+	{"4",   "апреля"},
+	{"05",  "мая"},
+	{"5",   "мая"},
+	{"06",  "июня"},
+	{"6",   "июня"},
+	{"07",  "июля"},
+	{"7",   "июля"},
+	{"08",  "августа"},
+	{"8",   "августа"},
+	{"09",  "сентября"},
+	{"9",   "сентября"},
+	{"10",  "октября"},
+	{"11",  "ноября"},
+	{"12",  "декабря"}
 };
 
 

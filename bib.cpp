@@ -270,10 +270,18 @@ QString Bib::asStyle() const
 		}
 		else if(acr.first == "<m>") /// month
 		{
-			if(dt.find(acr.second) != std::end(dt))
+			if(this->hasAttribute(acr.second))
 			{
 				const QString a = this->dt.at(acr.second);
-				res.replace(acr.first, months.at(a).left(3));
+				/// deal with russian months
+				if(this->isRus())
+				{
+					res.replace(acr.first, monthsRu.at(a));
+				}
+				else
+				{
+					res.replace(acr.first, monthsEn.at(a).left(3));
+				}
 			}
 			else
 			{
@@ -291,6 +299,15 @@ QString Bib::asStyle() const
 	res.replace("--", QString(0x2013));
 	/// deal with double dots
 	res.replace(QRegExp("\\.{2,}"), ".");
+	/// deal with russian (eds., In: and so on)
+	if(this->isRus())
+	{
+		/// look into styles
+		res.replace(" In: ", " В: ");				/// for chapters and proceedings, cyrillic 'V'
+		res.replace(" At: ", " На конференции: ");	/// for conference
+		res.replace(" eds.: ", " ред.: ");			/// for books and chapters
+		res.replace(" pp. ", " стр. ");				/// for books and chapters
+	}
 
 	return res;
 }
