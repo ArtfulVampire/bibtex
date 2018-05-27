@@ -10,15 +10,110 @@ int main()
 	const QString dirPath = "/media/Files/Dropbox/IHNA/PapersWorksBooks"
 							 "/OurLabPapers/ForSite";
 
-	bib::BibTable table(dirPath + "/AllLab/bibtex");
-	const QStringList guys = QDir(dirPath).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+	const QString allLab = dirPath + "/AllLab/bibtex";
+
+	/// popular remove filters
+	auto noDoi = [](const bib::Bib & in) -> bool
+	{ return !in.hasAttribute(bib::doi); };
+
+	auto noDoiOrPmid = [](const bib::Bib & in) -> bool
+	{ return !in.hasAttributesOne({bib::doi, bib::PMID}); };
+
+	auto isRus = [](const bib::Bib & in) -> bool
+	{ return in.isRus(); };
+
+	auto isTr = [](const bib::Bib & in) -> bool
+	{ return in.isTranslated(); };
+
+
+
+#if 01
+	/// make files
+	bib::BibTable table(allLab);
+	const QStringList guys
+	{
+		"Martynova",
+		"Portnova",
+		"Gladun",
+		"Atanov",
+		"Polishchuk",
+		"Liuakovich",
+		"Sake",
+		"Ivanitsky",
+		"Ukraintseva"
+	};
 
 //	for(const QString & guy : guys)
 	for(const QString & guy : {"Portnova"})
 	{
-		table.byAuthor(guy).sortByYear().toFile(dirPath + "/" + guy + ".txt");
+		table.byAuthor(guy)
+				.sortByYear()
+				.removeIf(noDoi)
+				.removeIf(isRus)
+				.removeIf(isTr)
+				.toFile(dirPath + "/" + guy + ".txt");
+	}
+#endif
+
+
+
+
+#if 0
+	/// clean AllLab/bibtex
+
+#if 0
+	for(const QString & fn : QDir(allLab).entryList({"*.txt"}))
+	{
+		{
+			/// clean of prepended numbers
+			QFile::rename(allLab + "/" + fn,
+						  allLab + "/" + fn.mid(fn.indexOf('_') + 1));
+		}
+	}
+#endif
+
+#if 0
+		/// check titles duplicate
+	std::map<QString, int> mp{};
+	for(const QString & fn : QDir(allLab).entryList({"*.txt"}))
+	{
+		bib::Bib bb(allLab + "/" + fn);
+		if(mp[bb.get(bib::title)] == 1) { std::cout << bb.getFileName() << std::endl; }
+		mp[bb.get(bib::title)]= 1;
 	}
 
+	for(auto in = mp.begin(); in != mp.end(); ++in)
+	{
+		if(in->second != 1)
+		{
+//			std::cout << in->first << std::endl;
+		}
+	}
+
+#endif
+
+#if 0
+	/// check lang field
+	for(const QString & fn : QDir(allLab).entryList({"*.txt"}))
+	{
+		/// check titles duplicate
+		bib::Bib bb(allLab + "/" + fn);
+		if(!bb.hasAttribute(bib::lang)) { std::cout << bb.getFileName() << std::endl; }
+	}
+#endif
+
+#if 0
+	/// check Spacial
+	for(const QString & fn : QDir(allLab).entryList({"*.txt"}))
+	{
+		/// check titles duplicate
+		bib::Bib bb(allLab + "/" + fn);
+		if(bb.get(bib::title).contains("Spacial")) { std::cout << bb.getFileName() << std::endl; }
+	}
+#endif
+
+	exit(0);
+#endif
 
 
 

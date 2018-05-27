@@ -18,7 +18,7 @@ void Bib::fromFile(const QString & filePath)
 void Bib::fromContents(const QString & bibContents)
 {
 	/// set style
-	QString sta = bibContents.mid(1, 20);
+	QString sta = bibContents.mid(1, 20); /// cut initial '@'
 	if(sta.startsWith(article))
 	{
 		this->format = Style::article;
@@ -66,9 +66,9 @@ void Bib::fromContents(const QString & bibContents)
 	this->authors = bib::authorsFromData(this->dt[author]);
 }
 
-Bib::Bib(const QString & bibContents)
+Bib::Bib(const QString & path) : filePath(path)
 {
-	fromContents(bibContents);
+	fromFile(path);
 }
 
 
@@ -85,8 +85,8 @@ std::vector<std::vector<QString>> authorsFromData(const QString & authors)
 
 		if(in.contains(',')) /// Last, First Second - usual format
 		{
-			last = in.left(in.indexOf(','));		/// set last (family) name
-			QString in2 = in.mid(in.indexOf(','));	/// cut last name
+			last = in.left(in.indexOf(','));			/// set last (family) name
+			QString in2 = in.mid(in.indexOf(',') + 1);	/// cut last name
 
 			auto ll = in2.split(QRegExp(R"([, ])"), QString::SkipEmptyParts); /// only spaces
 
@@ -230,16 +230,16 @@ QString Bib::asStyle() const
 							   [&mat2](const auto & par)
 		{ return par.first == mat2.captured(); });
 
-		QString val = dt.at((*it).second);
-		if(!val.isEmpty())
+		QString val = this->get((*it).second);
+		if(val.isEmpty())
+		{
+			res.remove(tmp);
+		}
+		else
 		{
 			QString tmpNew = tmp;
 			tmpNew.remove('['); tmpNew.remove(']');
 			res.replace(tmp, tmpNew);
-		}
-		else
-		{
-			res.remove(tmp);
 		}
 		mat = toFind.match(res);
 	}

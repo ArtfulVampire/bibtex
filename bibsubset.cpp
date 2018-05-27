@@ -15,8 +15,10 @@ void BibSubset::toFile(const QString & outPath)
 {
 	QFile out(outPath);
 	out.open(QIODevice::WriteOnly);
+
 	for(Bib & in : this->bibs)
 	{
+//		std::cout << in.getFilePath() << std::endl;
 		out.write((in.asStyle() + "\n\n").toUtf8());
 	}
 	out.close();
@@ -73,7 +75,7 @@ BibSubset & BibSubset::removeIf(const QString & attribute, const QString & value
 }
 
 
-BibSubset & BibSubset::removeIf(bool (*func)(bib::Bib))
+BibSubset & BibSubset::removeIf(bool (*func)(const bib::Bib &))
 {
 	for(auto it = std::begin(bibs); it != std::end(bibs); ++it)
 	{

@@ -21,6 +21,7 @@ inline std::ostream & operator<< (std::ostream & os, const QString & toOut)
 }
 
 /// to replace
+
 const QString author		= "author";
 const QString title			= "title";
 const QString booktitle		= "booktitle";
@@ -71,7 +72,8 @@ const std::vector<std::pair<QString, QString>> styleAcronyms
 	{"<St>",	state},
 	{"<DOI>",	doi},
 	{"<PMID>",	PMID},
-	{"<ISBN>",	ISBN}
+	{"<ISBN>",	ISBN},
+	{"<lang>",	lang}
 };
 
 
@@ -128,8 +130,11 @@ public:
 	bool hasAttributesOne(const std::vector<QString> & attrs) const;
 	QString get(const QString & attribute) const;
 	std::vector<std::vector<QString>> getAuthors() const { return authors; }
+	QString getFilePath() const { return filePath; }
+	QString getFileName() const { return filePath.mid(filePath.lastIndexOf('/') + 1); }
 
-	Bib(const QString & bibContents);
+	Bib(const QString & path);
+
 	void fromFile(const QString & filePath);
 	void fromContents(const QString & contents);
 
@@ -138,6 +143,7 @@ private:
 	std::vector<std::vector<QString>> authors{};
 	Style format{};
 	QString style{};
+	QString filePath{};
 };
 
 
@@ -159,7 +165,7 @@ public:
 	BibSubset & sortByYear(bool newFirst = true);
 	BibSubset & sortByAuthor();
 	BibSubset & removeIf(const QString & attribute, const QString & value);
-	BibSubset & removeIf(bool (*func)(bib::Bib));
+	BibSubset & removeIf(bool(*func)(const bib::Bib &));
 
 	void toFile(const QString & outPath);
 };
