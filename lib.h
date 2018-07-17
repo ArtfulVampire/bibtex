@@ -47,9 +47,11 @@ const QString lang			= "lang";			/// ru/rus, en/eng, translated title
 
 const QString article			= "article";
 const QString book				= "book";
-const QString conference		= "conference";
-const QString inproceedings		= "inproceedings";
-const QString chapter			= "chapter";
+const QString conference		= "conference";		/// oral presentation
+const QString inproceedings		= "inproceedings";	/// printed in proceedings
+const QString chapter			= "chapter";		/// chapter in a book
+/// add "incollection"
+
 
 const std::vector<std::pair<QString, QString>> styleAcronyms
 {
